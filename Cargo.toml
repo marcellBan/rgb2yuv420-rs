@@ -1,6 +1,6 @@
 [package]
 name = "rgb2yuv420"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Marcell Bán <Marcell.Ban@ccsys.eu>"]
 description = "Simple RGB to YUV420 converter"
 license = "MIT OR Apache-2.0"

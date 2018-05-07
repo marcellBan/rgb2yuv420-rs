@@ -5,11 +5,13 @@
 
 /// Converts an RGB image to YUV420
 ///
-/// `img` should contain the pixel data in the following format
+/// # Arguments
+///
+/// * `img` - should contain the pixel data in the following format:
 /// [r, g, b, ... , r, g, b, ... , r, g, b, ...]
 ///
-/// `bytes_per_pixel` should contain the number of bytes used by one pixel
-/// eg.: RGB is 3 bytes and RGBA is 4 bytes
+/// * `bytes_per_pixel` - should contain the number of bytes used by one pixel
+/// (eg.: RGB is 3 bytes and RGBA is 4 bytes)
 ///
 /// # Examples
 ///
