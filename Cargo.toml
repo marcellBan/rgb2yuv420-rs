@@ -4,6 +4,8 @@ version = "0.1.0"
 authors = ["Marcell Bán <Marcell.Ban@ccsys.eu>"]
 description = "Simple RGB to YUV420 converter"
 license = "MIT OR Apache-2.0"
+keywords = ["rgb", "yuv", "rgb2yuv", "yuv420"]
+repository = "https://github.com/marcellBan/rgb2yuv420-rs"
 
 [dependencies]
 
