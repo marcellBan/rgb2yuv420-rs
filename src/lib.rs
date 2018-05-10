@@ -68,26 +68,21 @@ fn convert_rgb_to_yuv420<T>(img: &[u8], width: u32, height: u32, bytes_per_pixel
     let mut y_index: usize = 0;
     let mut uv_index = frame_size;
     let mut yuv = vec![0; (width * height * 3 / 2) as usize];
-    let mut r: u16;
-    let mut g: u16;
-    let mut b: u16;
-    let mut y: u16;
-    let mut u: i16;
-    let mut v: i16;
     let mut index: usize = 0;
     for j in 0..height {
         for _ in 0..width {
-            r = img[index * bytes_per_pixel] as u16;
-            g = img[index * bytes_per_pixel + 1] as u16;
-            b = img[index * bytes_per_pixel + 2] as u16;
+            let r = i32::from(img[index * bytes_per_pixel]);
+            let g = i32::from(img[index * bytes_per_pixel + 1]);
+            let b = i32::from(img[index * bytes_per_pixel + 2]);
             index += 1;
-            y = (77 * r + 150 * g + 29 * b + 128) >> 8;
-            u = ((-43 * r as i16 - 84 * g as i16 + 127 * b as i16 + 128) >> 8) + 128;
-            v = ((127 * r as i16 - 106 * g as i16 - 21 * b as i16 + 128) >> 8) + 128;
-            yuv[y_index] = clamp(y as i32);
+            yuv[y_index] = clamp((77 * r + 150 * g + 29 * b + 128) >> 8);
             y_index += 1;
             if j % 2 == 0 && index % 2 == 0 {
-                store_uv(&mut yuv, &mut uv_index, chroma_size, clamp(u as i32), clamp(v as i32));
+                store_uv(&mut yuv,
+                         &mut uv_index,
+                         chroma_size,
+                         clamp(((-43 * r - 84 * g + 127 * b + 128) >> 8) + 128),
+                         clamp(((127 * r - 106 * g - 21 * b + 128) >> 8) + 128));
             }
         }
     }
@@ -96,8 +91,8 @@ fn convert_rgb_to_yuv420<T>(img: &[u8], width: u32, height: u32, bytes_per_pixel
 
 fn clamp(val: i32) -> u8 {
     match val {
-        ref v if v < &0 => 0,
-        ref v if v > &255 => 255,
+        ref v if *v < 0 => 0,
+        ref v if *v > 255 => 255,
         v => v as u8,
     }
 }
