@@ -23,12 +23,23 @@
 /// let yuv = rgb2yuv420::convert_rgb_to_yuv420p(&rgb, 2, 2, 3);
 /// assert_eq!(yuv.len(), rgb.len() / 2);
 /// ```
-pub fn convert_rgb_to_yuv420p(img: &[u8], width: u32, height: u32, bytes_per_pixel: usize) -> Vec<u8> {
-    convert_rgb_to_yuv420(img, width, height, bytes_per_pixel, |yuv, uv_index, chroma_size, u, v| {
-        yuv[*uv_index] = u;
-        yuv[*uv_index + (f32::ceil(chroma_size as f32 / 2.0) as usize)] = v;
-        *uv_index += 1;
-    })
+pub fn convert_rgb_to_yuv420p(
+    img: &[u8],
+    width: u32,
+    height: u32,
+    bytes_per_pixel: usize,
+) -> Vec<u8> {
+    convert_rgb_to_yuv420(
+        img,
+        width,
+        height,
+        bytes_per_pixel,
+        |yuv, uv_index, chroma_size, u, v| {
+            yuv[*uv_index] = u;
+            yuv[*uv_index + chroma_size] = v;
+            *uv_index += 1;
+        },
+    )
 }
 
 /// Converts an RGB image to YUV420sp NV12 (semi-planar/2 planes)
@@ -52,17 +63,36 @@ pub fn convert_rgb_to_yuv420p(img: &[u8], width: u32, height: u32, bytes_per_pix
 /// let yuv = rgb2yuv420::convert_rgb_to_yuv420sp_nv12(&rgb, 2, 2, 3);
 /// assert_eq!(yuv.len(), rgb.len() / 2);
 /// ```
-pub fn convert_rgb_to_yuv420sp_nv12(img: &[u8], width: u32, height: u32, bytes_per_pixel: usize) -> Vec<u8> {
-    convert_rgb_to_yuv420(img, width, height, bytes_per_pixel, |yuv, uv_index, _cs, u, v| {
-        yuv[*uv_index] = u;
-        *uv_index += 1;
-        yuv[*uv_index] = v;
-        *uv_index += 1;
-    })
+pub fn convert_rgb_to_yuv420sp_nv12(
+    img: &[u8],
+    width: u32,
+    height: u32,
+    bytes_per_pixel: usize,
+) -> Vec<u8> {
+    convert_rgb_to_yuv420(
+        img,
+        width,
+        height,
+        bytes_per_pixel,
+        |yuv, uv_index, _cs, u, v| {
+            yuv[*uv_index] = u;
+            *uv_index += 1;
+            yuv[*uv_index] = v;
+            *uv_index += 1;
+        },
+    )
 }
 
-fn convert_rgb_to_yuv420<T>(img: &[u8], width: u32, height: u32, bytes_per_pixel: usize, store_uv: T) -> Vec<u8>
-    where T: Fn(&mut Vec<u8>, &mut usize, usize, u8, u8) -> () {
+fn convert_rgb_to_yuv420<T>(
+    img: &[u8],
+    width: u32,
+    height: u32,
+    bytes_per_pixel: usize,
+    store_uv: T,
+) -> Vec<u8>
+where
+    T: Fn(&mut Vec<u8>, &mut usize, usize, u8, u8),
+{
     let frame_size: usize = (width * height) as usize;
     let chroma_size: usize = frame_size / 4;
     let mut y_index: usize = 0;
@@ -78,11 +108,13 @@ fn convert_rgb_to_yuv420<T>(img: &[u8], width: u32, height: u32, bytes_per_pixel
             yuv[y_index] = clamp((77 * r + 150 * g + 29 * b + 128) >> 8);
             y_index += 1;
             if j % 2 == 0 && index % 2 == 0 {
-                store_uv(&mut yuv,
-                         &mut uv_index,
-                         chroma_size,
-                         clamp(((-43 * r - 84 * g + 127 * b + 128) >> 8) + 128),
-                         clamp(((127 * r - 106 * g - 21 * b + 128) >> 8) + 128));
+                store_uv(
+                    &mut yuv,
+                    &mut uv_index,
+                    chroma_size,
+                    clamp(((-43 * r - 84 * g + 127 * b + 128) >> 8) + 128),
+                    clamp(((127 * r - 106 * g - 21 * b + 128) >> 8) + 128),
+                );
             }
         }
     }
@@ -114,13 +146,18 @@ mod tests {
     #[test]
     fn rgba_to_yuv_from_file() {
         extern crate png;
-        use std::fs::File;
         use super::convert_rgb_to_yuv420p;
+        use std::fs::File;
         let decoder = png::Decoder::new(File::open("pic/ferris.png").unwrap());
         let (info, mut reader) = decoder.read_info().unwrap();
         let mut buf = vec![0; info.buffer_size()];
         reader.next_frame(&mut buf).unwrap();
-        let yuv = convert_rgb_to_yuv420p(&buf, info.width, info.height, info.line_size / info.width as usize);
+        let yuv = convert_rgb_to_yuv420p(
+            &buf,
+            info.width,
+            info.height,
+            info.line_size / info.width as usize,
+        );
         assert_eq!(yuv.len(), buf.len() / 4 * 3 / 2);
     }
 }
